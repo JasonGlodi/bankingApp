@@ -6,13 +6,14 @@ import {
   StyleSheet,
   SafeAreaView,
   ScrollView,
+  Image,
 } from "react-native";
 import { Link } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import Header from "../components/header";
 import Navbar from "../components/Navbar";
 
-const MenuItem = ({ title, subtitle, href }) => {
+const MenuItem = ({ title, subtitle, href, imageSource }) => {
   return (
     <Link href={href} asChild>
       <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
@@ -21,9 +22,7 @@ const MenuItem = ({ title, subtitle, href }) => {
             <Text style={styles.menuItemTitle}>{title}</Text>
             <Text style={styles.menuItemSubtitle}>{subtitle}</Text>
           </View>
-          <View style={styles.imagePlaceholder}>
-            {/* Image placeholder - you would replace this with your actual images */}
-          </View>
+          <Image source={imageSource} style={styles.image} />
         </View>
       </TouchableOpacity>
     </Link>
@@ -37,24 +36,28 @@ export default function BankingScreen() {
       title: "Branch",
       subtitle: "Search for branch",
       href: "/banking/branch",
+      imageSource: require("../../assets/branch.jpg"),
     },
     {
       id: "interest",
       title: "Interest rate",
       subtitle: "Search for interest rate",
       href: "/banking/interest-rate",
+      imageSource: require("../../assets/interest.jpg"),
     },
     {
       id: "exchangeRate",
       title: "Exchange rate",
       subtitle: "Search for exchange rate",
       href: "/banking/exchange-rate",
+      imageSource: require("../../assets/interest-rate.jpg"),
     },
     {
       id: "exchange",
       title: "Exchange",
       subtitle: "Exchange amount of money",
       href: "/banking/exchange",
+      imageSource: require("../../assets/exchange.jpg"),
     },
   ];
 
@@ -74,11 +77,11 @@ export default function BankingScreen() {
             title={item.title}
             subtitle={item.subtitle}
             href={item.href}
+            imageSource={item.imageSource}
           />
         ))}
       </ScrollView>
 
-      {/* Add bottom padding to account for navbar */}
       <View style={styles.navbarSpacer} />
 
       <Navbar />
@@ -123,16 +126,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#9e9e9e",
   },
-  imagePlaceholder: {
+  image: {
     width: 80,
     height: 80,
     borderRadius: 8,
-    backgroundColor: "#f0f4ff",
     marginLeft: 16,
-    justifyContent: "center",
-    alignItems: "center",
+    resizeMode: "cover",
   },
   navbarSpacer: {
-    height: 80, // Adjust based on navbar height
+    height: 80,
   },
 });

@@ -60,9 +60,8 @@ const Navbar = () => {
       {navItems.map((item, index) => {
         // Check if this route is active
         const isActive =
-          pathname === item.route ||
-          (item.route === "/banking" && pathname.startsWith("/banking")) ||
-          (item.route !== "/banking" && pathname.startsWith(item.route));
+          (item.route === "/" && pathname === "/") ||
+          (item.route !== "/" && pathname.startsWith(item.route));
 
         return (
           <TouchableOpacity
