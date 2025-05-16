@@ -27,12 +27,6 @@ const LoginScreen = () => {
       >
         <View style={styles.innerContainer}>
           {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity style={styles.backButton}>
-              <Ionicons name="chevron-back" size={24} color="#000" />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Login</Text>
-          </View>
 
           {/* Welcome Text */}
           <View style={styles.welcomeBox}>

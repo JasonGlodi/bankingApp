@@ -9,7 +9,7 @@ export default function RootLayout() {
 
         // Style options
         headerStyle: {
-          backgroundColor: "#4e54c8", // Match your blue color
+          backgroundColor: "#FFFFFFFF", // Match your blue color
         },
         headerTintColor: "#fff",
         headerTitleStyle: {
