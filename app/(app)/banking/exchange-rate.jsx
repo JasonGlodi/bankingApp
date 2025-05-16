@@ -10,8 +10,8 @@ import {
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
-import Header from "../components/header";
-import Navbar from "../components/Navbar";
+import Header from "../../components/header";
+import Navbar from "../../components/Navbar";
 
 const API_KEY = "5e513b94141cb8ff254da33c"; // This API was gotten from ExchangeRate-API key
 const BASE_CURRENCY = "XAF"; // CFA Franc

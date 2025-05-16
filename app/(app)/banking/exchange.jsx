@@ -10,19 +10,19 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Modal,
+  FlatList,
+  TouchableWithoutFeedback,
   KeyboardAvoidingView,
   Platform,
   Keyboard,
-  TouchableWithoutFeedback,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
-import Header from "../components/header";
-import Navbar from "../components/Navbar";
-import RNPickerSelect from "react-native-picker-select";
+import Header from "../../components/header";
+import Navbar from "../../components/Navbar";
 import { Ionicons } from "@expo/vector-icons";
 
-// State variables for currencies, amounts, dropdown items, and loading state
 export default function ExchangeScreen() {
   const router = useRouter();
   const [fromCurrency, setFromCurrency] = useState("USD");
@@ -31,14 +31,15 @@ export default function ExchangeScreen() {
   const [toAmount, setToAmount] = useState("");
   const [currencyItems, setCurrencyItems] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selecting, setSelecting] = useState("from");
 
-  const API_KEY = "5e513b94141cb8ff254da33c"; // the API key for the Exchange Rate
+  const API_KEY = "5e513b94141cb8ff254da33c";
 
   useEffect(() => {
     fetchSupportedCurrencies();
   }, []);
 
-  // Fetch list of supported currencies from the API
   const fetchSupportedCurrencies = async () => {
     try {
       const response = await fetch(
@@ -62,7 +63,6 @@ export default function ExchangeScreen() {
 
   const convertCurrency = async () => {
     if (!fromAmount) return;
-
     setIsLoading(true);
     try {
       const response = await fetch(
@@ -85,6 +85,20 @@ export default function ExchangeScreen() {
     router.push("/banking");
   };
 
+  const openCurrencySelector = (type) => {
+    setSelecting(type);
+    setModalVisible(true);
+  };
+
+  const selectCurrency = (code) => {
+    if (selecting === "from") {
+      setFromCurrency(code);
+    } else {
+      setToCurrency(code);
+    }
+    setModalVisible(false);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
@@ -101,12 +115,13 @@ export default function ExchangeScreen() {
             keyboardShouldPersistTaps="handled"
           >
             <Image
-              source={require("../../assets/Illustration.jpg")}
+              source={require("../../../assets/Illustration.jpg")}
               style={styles.image}
               resizeMode="contain"
             />
 
             <View style={styles.card}>
+              {/* FROM section */}
               <Text style={styles.label}>From</Text>
               <View style={styles.inputRow}>
                 <TextInput
@@ -116,23 +131,32 @@ export default function ExchangeScreen() {
                   value={fromAmount}
                   onChangeText={setFromAmount}
                 />
-                <RNPickerSelect
-                  onValueChange={setFromCurrency}
-                  value={fromCurrency}
-                  items={currencyItems}
-                  style={pickerSelectStyles}
-                  useNativeAndroidPickerStyle={false}
-                  Icon={() => (
-                    <Ionicons name="chevron-down" size={20} color="#333" />
-                  )}
+                <TouchableOpacity
+                  style={styles.dropdownCard}
+                  onPress={() => openCurrencySelector("from")}
+                >
+                  <Text style={styles.dropdownText}>{fromCurrency}</Text>
+                  <Ionicons name="chevron-down" size={18} color="#333" />
+                </TouchableOpacity>
+              </View>
+
+              {/* ARROW SECTION */}
+              <View style={styles.arrowContainer}>
+                <Ionicons
+                  name="arrow-down"
+                  size={30}
+                  color="blue"
+                  style={styles.arrowIcon}
+                />
+                <Ionicons
+                  name="arrow-up"
+                  size={30}
+                  color="red"
+                  style={styles.arrowIcon}
                 />
               </View>
 
-              <View style={styles.arrowContainer}>
-                <Ionicons name="arrow-down" size={20} color="blue" />
-                <Ionicons name="arrow-up" size={20} color="red" />
-              </View>
-
+              {/* TO section */}
               <Text style={styles.label}>To</Text>
               <View style={styles.inputRow}>
                 <TextInput
@@ -142,18 +166,16 @@ export default function ExchangeScreen() {
                   value={toAmount}
                   editable={false}
                 />
-                <RNPickerSelect
-                  onValueChange={setToCurrency}
-                  value={toCurrency}
-                  items={currencyItems}
-                  style={pickerSelectStyles}
-                  useNativeAndroidPickerStyle={false}
-                  Icon={() => (
-                    <Ionicons name="chevron-down" size={20} color="#333" />
-                  )}
-                />
+                <TouchableOpacity
+                  style={styles.dropdownCard}
+                  onPress={() => openCurrencySelector("to")}
+                >
+                  <Text style={styles.dropdownText}>{toCurrency}</Text>
+                  <Ionicons name="chevron-down" size={18} color="#333" />
+                </TouchableOpacity>
               </View>
 
+              {/* Exchange Button */}
               <TouchableOpacity
                 style={[
                   styles.exchangeButton,
@@ -182,26 +204,44 @@ export default function ExchangeScreen() {
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>
 
+      {/* CURRENCY SELECT MODAL */}
+      <Modal visible={modalVisible} animationType="fade" transparent={true}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Select Currency</Text>
+            <FlatList
+              data={currencyItems}
+              keyExtractor={(item) => item.value}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.modalItem}
+                  onPress={() => selectCurrency(item.value)}
+                >
+                  <Text>{item.label}</Text>
+                </TouchableOpacity>
+              )}
+            />
+            <TouchableOpacity
+              onPress={() => setModalVisible(false)}
+              style={styles.modalCloseButton}
+            >
+              <Text style={{ color: "#007bff" }}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <View style={styles.navbarSpacer} />
       <Navbar />
     </SafeAreaView>
   );
 }
 
+// ========== STYLES ==========
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f8f9fa",
-  },
-  scrollContent: {
-    padding: 16,
-    alignItems: "center",
-  },
-  image: {
-    width: "100%",
-    height: 200,
-    marginBottom: 20,
-  },
+  container: { flex: 1, backgroundColor: "#f8f9fa" },
+  scrollContent: { padding: 16, alignItems: "center" },
+  image: { width: "100%", height: 200, marginBottom: 20 },
   card: {
     width: "100%",
     backgroundColor: "#fff",
@@ -213,11 +253,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 5,
   },
-  label: {
-    color: "#999",
-    marginBottom: 5,
-    fontSize: 14,
-  },
+  label: { color: "#999", marginBottom: 5, fontSize: 14 },
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -236,7 +272,26 @@ const styles = StyleSheet.create({
   arrowContainer: {
     flexDirection: "row",
     justifyContent: "center",
+    alignItems: "center",
     marginBottom: 16,
+  },
+  arrowIcon: {
+    marginHorizontal: 10,
+  },
+
+  dropdownCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 10,
+    height: 40,
+    backgroundColor: "#f1f1f1",
+    borderRadius: 8,
+    marginLeft: 10,
+  },
+  dropdownText: {
+    marginRight: 6,
+    fontSize: 14,
+    color: "#333",
   },
   exchangeButton: {
     paddingVertical: 12,
@@ -251,23 +306,30 @@ const styles = StyleSheet.create({
   navbarSpacer: {
     height: 80,
   },
-});
-
-const pickerSelectStyles = StyleSheet.create({
-  inputIOS: {
-    fontSize: 16,
-    paddingVertical: 12,
-    color: "#333",
-    paddingRight: 30,
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.4)",
+    paddingHorizontal: 20,
   },
-  inputAndroid: {
-    fontSize: 16,
-    paddingVertical: 12,
-    color: "#333",
-    paddingRight: 30,
+  modalContainer: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 20,
+    maxHeight: "70%",
   },
-  iconContainer: {
-    top: 15,
-    right: 10,
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  modalItem: {
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderColor: "#eee",
+  },
+  modalCloseButton: {
+    marginTop: 10,
+    alignItems: "center",
   },
 });

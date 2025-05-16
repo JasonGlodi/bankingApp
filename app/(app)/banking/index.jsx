@@ -10,8 +10,8 @@ import {
 } from "react-native";
 import { Link } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import Header from "../components/header";
-import Navbar from "../components/Navbar";
+import Header from "../../components/header";
+import Navbar from "../../components/Navbar";
 
 const MenuItem = ({ title, subtitle, href, imageSource }) => {
   return (
@@ -36,28 +36,28 @@ export default function BankingScreen() {
       title: "Branch",
       subtitle: "Search for branch",
       href: "/banking/branch",
-      imageSource: require("../../assets/branch.jpg"),
+      imageSource: require("../../../assets/branch.jpg"),
     },
     {
       id: "interest",
       title: "Interest rate",
       subtitle: "Search for interest rate",
       href: "/banking/interest-rate",
-      imageSource: require("../../assets/interest.jpg"),
+      imageSource: require("../../../assets/interest.jpg"),
     },
     {
       id: "exchangeRate",
       title: "Exchange rate",
       subtitle: "Search for exchange rate",
       href: "/banking/exchange-rate",
-      imageSource: require("../../assets/interest-rate.jpg"),
+      imageSource: require("../../../assets/interest-rate.jpg"),
     },
     {
       id: "exchange",
       title: "Exchange",
       subtitle: "Exchange amount of money",
       href: "/banking/exchange",
-      imageSource: require("../../assets/exchange.jpg"),
+      imageSource: require("../../../assets/exchange.jpg"),
     },
   ];
 

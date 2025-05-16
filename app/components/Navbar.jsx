@@ -15,7 +15,7 @@ const Navbar = () => {
   const navItems = [
     {
       label: "Home",
-      route: "/",
+      route: "/home",
       icon: (isActive) => (
         <Ionicons name="home" size={22} color={isActive ? "#007AFF" : "#888"} />
       ),

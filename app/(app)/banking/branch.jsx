@@ -1,8 +1,8 @@
 import React from "react";
 import { View, Text, StyleSheet, SafeAreaView } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import Header from "../components/header";
-import Navbar from "../components/Navbar";
+import Header from "../../components/header";
+import Navbar from "../../components/Navbar";
 
 export default function BranchScreen() {
   return (

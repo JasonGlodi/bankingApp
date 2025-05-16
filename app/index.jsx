@@ -1,23 +1,30 @@
-import { StyleSheet, Text, View } from "react-native";
-import React from "react";
+import { View, Text, StyleSheet, Pressable } from "react-native";
+import { Link } from "expo-router";
 
-// Import navbar with lowercase to match the filename
-import Navbar from "./components/Navbar";
-import Header from "./components/header";
-
-export default function Home() {
+export default function Index() {
   return (
     <View style={styles.container}>
-      <Header title="Home" />
-      <View style={styles.contentContainer}>
-        <Text style={styles.screenText}>Home Screen</Text>
-        <Text style={styles.infoText}>
-          This is the main screen of your banking app
-        </Text>
-      </View>
+      <Text style={styles.title}>Welcome to Banking App</Text>
 
-      {/* No need to pass navigation props with Expo Router */}
-      <Navbar />
+      <View style={styles.linkContainer}>
+        <Link href="/home" asChild>
+          <Pressable style={styles.button}>
+            <Text style={styles.buttonText}>Go to Home</Text>
+          </Pressable>
+        </Link>
+
+        <Link href="/(auth)/login" asChild>
+          <Pressable style={styles.button}>
+            <Text style={styles.buttonText}>Login</Text>
+          </Pressable>
+        </Link>
+
+        <Link href="/(auth)/signin" asChild>
+          <Pressable style={styles.button}>
+            <Text style={styles.buttonText}>Sign Up</Text>
+          </Pressable>
+        </Link>
+      </View>
     </View>
   );
 }
@@ -25,23 +32,28 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
-  },
-  contentContainer: {
-    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingBottom: 60, // Make room for the navbar
+    padding: 20,
   },
-  screenText: {
-    fontSize: 28,
+  title: {
+    fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 10,
+    marginBottom: 20,
   },
-  infoText: {
-    fontSize: 16,
-    color: "#555",
-    textAlign: "center",
-    paddingHorizontal: 30,
+  linkContainer: {
+    width: "100%",
+    marginTop: 20,
+  },
+  button: {
+    backgroundColor: "#f4511e",
+    padding: 15,
+    borderRadius: 5,
+    marginVertical: 10,
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "white",
+    fontWeight: "bold",
   },
 });

@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import React from "react";
-import Navbar from "./components/Navbar";
-import Header from "./components/header";
+import Navbar from "../components/Navbar";
+import Header from "../components/header";
 
 export default function Profile() {
   return (

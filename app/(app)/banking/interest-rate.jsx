@@ -2,8 +2,8 @@ import React from "react";
 import { View, Text, StyleSheet, SafeAreaView } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
-import Header from "../components/header";
-import Navbar from "../components/Navbar";
+import Header from "../../components/header";
+import Navbar from "../../components/Navbar";
 
 export default function InterestRateScreen() {
   const router = useRouter();
