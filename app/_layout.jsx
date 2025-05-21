@@ -6,7 +6,6 @@ export default function RootLayout() {
       screenOptions={{
         // Disable the sliding animation
         animation: "none",
-
         // Style options
         headerStyle: {
           backgroundColor: "#FFFFFFFF", // Match your blue color
@@ -15,12 +14,8 @@ export default function RootLayout() {
         headerTitleStyle: {
           fontWeight: "bold",
         },
-        // Hide the route path by setting a custom header title
-        // or completely hide the header title
-        headerTitle: "", // Set to empty string or remove this line for no title at all
-
-        // If you want to hide the entire header in some screens
-        // headerShown: false,
+        // Hide the header completely by default
+        headerShown: false,
       }}
     >
       {/* Define each screen with custom options if needed */}
@@ -28,14 +23,14 @@ export default function RootLayout() {
         name="index"
         options={{
           title: "Welcome", // This will show "Welcome" instead of the route
+          headerShown: true, // Show header on this screen if needed
         }}
       />
       <Stack.Screen
         name="(app)/home"
         options={{
           title: "Home", // This will show "Home" instead of "(app)/home"
-          // If you already have a back button and title in your component:
-          // headerShown: false, // Completely hide the header
+          headerShown: false, // Hide the header completely on Home screen
         }}
       />
       {/* Other screens... */}

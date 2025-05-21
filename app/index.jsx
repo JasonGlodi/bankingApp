@@ -1,30 +1,34 @@
-import { View, Text, StyleSheet, Pressable } from "react-native";
+import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
 import { Link } from "expo-router";
 
-export default function Index() {
+export default function LandingPage() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome to Banking App</Text>
+      <Text style={styles.logo}>MyBank</Text>
+      <Text style={styles.tagline}>Your Future, Your Bank</Text>
 
-      <View style={styles.linkContainer}>
-        <Link href="/home" asChild>
-          <Pressable style={styles.button}>
-            <Text style={styles.buttonText}>Go to Home</Text>
-          </Pressable>
-        </Link>
+      <Image
+        source={require("../assets/branch.jpg")} // Update this path based on your assets
+        style={styles.image}
+        resizeMode="contain"
+      />
 
-        <Link href="/(auth)/login" asChild>
-          <Pressable style={styles.button}>
-            <Text style={styles.buttonText}>Login</Text>
-          </Pressable>
-        </Link>
+      <Link href="/(auth)/signin" asChild>
+        <TouchableOpacity style={styles.getStartedBtn}>
+          <Text style={styles.btnText}>Get Started</Text>
+        </TouchableOpacity>
+      </Link>
 
-        <Link href="/(auth)/signin" asChild>
-          <Pressable style={styles.button}>
-            <Text style={styles.buttonText}>Sign Up</Text>
-          </Pressable>
-        </Link>
-      </View>
+      <Link href="/(auth)/login" asChild>
+        <TouchableOpacity>
+          <Text style={styles.loginText}>Already have an account? Log in</Text>
+        </TouchableOpacity>
+      </Link>
+      <Link href="/(app)/home" asChild>
+        <TouchableOpacity>
+          <Text style={styles.loginText}>Go to home</Text>
+        </TouchableOpacity>
+      </Link>
     </View>
   );
 }
@@ -32,28 +36,44 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
     padding: 20,
   },
-  title: {
-    fontSize: 24,
+  logo: {
+    fontSize: 36,
     fontWeight: "bold",
-    marginBottom: 20,
+    color: "#2C3E50",
+    marginBottom: 10,
   },
-  linkContainer: {
+  tagline: {
+    fontSize: 16,
+    color: "#7F8C8D",
+    marginBottom: 30,
+  },
+  image: {
     width: "100%",
-    marginTop: 20,
+    height: 250,
+    marginBottom: 40,
   },
-  button: {
-    backgroundColor: "#f4511e",
-    padding: 15,
-    borderRadius: 5,
-    marginVertical: 10,
+  getStartedBtn: {
+    backgroundColor: "#2980B9",
+    paddingVertical: 15,
+    paddingHorizontal: 40,
+    borderRadius: 30,
+    marginBottom: 20,
+    width: "100%",
     alignItems: "center",
   },
-  buttonText: {
-    color: "white",
-    fontWeight: "bold",
+  btnText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  loginText: {
+    color: "#2980B9",
+    fontSize: 14,
+    marginTop: 10,
   },
 });
