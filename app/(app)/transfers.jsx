@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Modal,
+  SafeAreaView,
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { Picker } from "@react-native-picker/picker";
@@ -91,7 +92,7 @@ export default function Transfers() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Header title="Transfer" />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -296,7 +297,7 @@ export default function Transfers() {
       </Modal>
 
       <Navbar />
-    </View>
+    </SafeAreaView>
   );
 }
 

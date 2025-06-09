@@ -9,6 +9,7 @@ import {
   Modal,
   Pressable,
   Animated,
+  SafeAreaView,
 } from "react-native";
 import Navbar from "../components/Navbar";
 import Header from "../components/header";
@@ -76,7 +77,7 @@ export default function Profile() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Header title="Profile" />
 
       {/* Notification message overlay */}
@@ -270,7 +271,7 @@ export default function Profile() {
       </Modal>
 
       <Navbar />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -391,3 +392,5 @@ const styles = StyleSheet.create({
 });
 // npm install react-native-modal-dropdown
 //npm  install react-native-vector-icons
+// npm install react-native-gesture-handler react-native-reanimated
+// npm install react-native-safe-area-context

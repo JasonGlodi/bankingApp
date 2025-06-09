@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, SafeAreaView } from "react-native";
 import React from "react";
 
 // Import navbar with lowercase to match the filename
@@ -7,7 +7,7 @@ import Header from "../components/header";
 
 export default function Home() {
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Header title="Home" />
       <View style={styles.contentContainer}>
         <Text style={styles.screenText}>Home Screen</Text>
@@ -18,7 +18,7 @@ export default function Home() {
 
       {/* No need to pass navigation props with Expo Router */}
       <Navbar />
-    </View>
+    </SafeAreaView>
   );
 }
 

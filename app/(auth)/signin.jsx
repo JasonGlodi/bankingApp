@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { Link } from "expo-router";
 import React, { useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -251,9 +252,9 @@ const SignupScreen = () => {
                 <Text style={styles.loginLinkText}>
                   Already have an account?{" "}
                 </Text>
-                <TouchableOpacity>
+                <Link href="/(auth)/login" asChild>
                   <Text style={styles.loginLink}>Sign In</Text>
-                </TouchableOpacity>
+                </Link>
               </View>
             </View>
           </View>

@@ -8,7 +8,7 @@ export default function RootLayout() {
         animation: "none",
         // Style options
         headerStyle: {
-          backgroundColor: "#FFFFFFFF", // Match your blue color
+          backgroundColor: "#20398CFF", // Match your blue color
         },
         headerTintColor: "#fff",
         headerTitleStyle: {
