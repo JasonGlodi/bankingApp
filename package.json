@@ -15,7 +15,9 @@
     "axios": "^1.9.0",
     "expo": "~53.0.9",
     "expo-constants": "~17.1.6",
+    "expo-linear-gradient": "~14.1.5",
     "expo-linking": "~7.1.4",
+    "expo-location": "~18.1.5",
     "expo-router": "~5.0.6",
     "expo-status-bar": "~2.2.3",
     "number-to-words": "^1.2.4",
@@ -23,13 +25,13 @@
     "react-native": "0.79.2",
     "react-native-currency-input": "^1.1.1",
     "react-native-ionicons": "^4.6.5",
+    "react-native-maps": "^1.20.1",
     "react-native-modal-dropdown": "^1.0.2",
     "react-native-paper": "^5.14.5",
     "react-native-picker-select": "^9.3.1",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.10.0",
-    "react-native-vector-icons": "^10.2.0",
-    "expo-linear-gradient": "~14.1.5"
+    "react-native-vector-icons": "^10.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

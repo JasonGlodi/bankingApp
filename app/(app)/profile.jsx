@@ -95,8 +95,8 @@ export default function Profile() {
           <View style={styles.avatarPlaceholder}>
             <Text style={styles.avatarText}>JS</Text>
           </View>
-          <Text style={styles.userName}>Jaidon Glodi</Text>
-          <Text style={styles.userHandle}>@JaisonGlodi@gmail.com</Text>
+          <Text style={styles.userName}>Ngong Noee</Text>
+          <Text style={styles.userHandle}>noeeyvanna14@gmail.com</Text>
         </View>
 
         {/* Personal Information Section */}
@@ -209,8 +209,8 @@ export default function Profile() {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>My Profile</Text>
-            <Text style={styles.modalText}>Name: Jaidon Glodi</Text>
-            <Text style={styles.modalText}>Email: JaisonGlodi@gmail.com</Text>
+            <Text style={styles.modalText}>Name: Ngong Noee</Text>
+            <Text style={styles.modalText}>Email: noeeyvanna14@gmail.com</Text>
             <Text style={styles.modalText}>Phone: +237 612 345 678</Text>
             <Text style={styles.modalText}>Member since: Jan 2022</Text>
             <Pressable onPress={() => setShowMyProfile(false)}>
