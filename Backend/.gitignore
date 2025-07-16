@@ -1,0 +1,107 @@
+# Ignore Python virtual environments anywhere in the project
+**/env/
+**/.venv/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# PyCharm project files
+.idea/
+*.iml
+
+# VSCode settings folder
+.vscode/
+
+# MacOS files
+.DS_Store
+
+# Windows thumbnail cache files
+Thumbs.db
+ehthumbs.db
+
+# VS Code workspace storage
+.vscode/
+
+# Logs and databases
+*.log
+*.sqlite3
+
+# Environment variable files
+**/.env
+**/.env.*.local
+
+# Pytest cache
+.pytest_cache/
+
+# mypy cache
+.mypy_cache/
+
+# Coverage reports
+.coverage
+.coverage.*
+
+# C extensions
+*.so
+
+# Spyder project settings
+.spyderproject
+
+# Rope project settings
+.ropeproject
+
+# Sphinx documentation output
+docs/_build/
+
+# Pyre type checker
+.pyre/
+
+# Pycharm cache
+.idea/
+
+# Local virtual environment folder (alternate names)
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Docker files
+*.dockerignore
+
+# Ignore any compiled files or temp files that might appear
+*.tmp
+*.temp
+*.bak
+*~
+
+# Ignore secret keys or credentials if placed accidentally
+secret.key
+credentials.json
+
