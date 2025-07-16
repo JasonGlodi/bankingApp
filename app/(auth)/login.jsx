@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -11,6 +11,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Alert,
 } from "react-native";
 
 const LoginScreen = () => {
@@ -18,6 +19,46 @@ const LoginScreen = () => {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [hidePassword, setHidePassword] = useState(true);
+  const router = useRouter();
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert("Error", "Please enter both email and password.");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://192.168.1.177:8000/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        Alert.alert("Welcome", `Logged in as ${data.username}`);
+        console.log("Access Token:", data.access_token);
+
+        // ✅ Redirect to home page
+        router.push("/home");
+      } else {
+        let errorMessage = "Login failed";
+        if (data.detail) {
+          errorMessage = data.detail;
+        }
+        Alert.alert("Login Error", errorMessage);
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      Alert.alert("Network Error", "Please check your connection.");
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -27,16 +68,11 @@ const LoginScreen = () => {
         style={styles.keyboardView}
       >
         <View style={styles.innerContainer}>
-          {/* Header */}
-
-          {/* Welcome Text */}
           <View style={styles.welcomeBox}>
             <Text style={styles.welcomeText}>Hello, Welcome back 👋</Text>
           </View>
 
-          {/* Login Form */}
           <View style={styles.form}>
-            {/* Email Field */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Email</Text>
               <TextInput
@@ -49,13 +85,12 @@ const LoginScreen = () => {
               />
             </View>
 
-            {/* Password Field */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Password</Text>
               <View style={styles.passwordRow}>
                 <TextInput
                   style={[styles.input, { flex: 1 }]}
-                  placeholder="Mot de passe"
+                  placeholder="Password"
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry={hidePassword}
@@ -73,7 +108,6 @@ const LoginScreen = () => {
               </View>
             </View>
 
-            {/* Remember Me and Forgot Password */}
             <View style={styles.rememberForgotRow}>
               <TouchableOpacity
                 style={styles.rememberMe}
@@ -97,14 +131,12 @@ const LoginScreen = () => {
               </TouchableOpacity>
             </View>
 
-            {/* Login Button */}
-            <TouchableOpacity style={styles.loginButton}>
+            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
               <Text style={styles.loginButtonText}>Login</Text>
             </TouchableOpacity>
 
-            {/* Register Link */}
             <View style={styles.registerRow}>
-              <Text style={styles.registerText}>Pas de compte ? </Text>
+              <Text style={styles.registerText}>Don't have an account? </Text>
               <Link href="/(auth)/signin" asChild>
                 <Text style={styles.signUpText}>Sign up</Text>
               </Link>
@@ -127,25 +159,6 @@ const styles = StyleSheet.create({
   innerContainer: {
     flex: 1,
     paddingHorizontal: 24,
-  },
-  header: {
-    marginTop: 16,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  headerTitle: {
-    marginLeft: 16,
-    fontSize: 18,
-    fontWeight: "500",
   },
   welcomeBox: {
     marginTop: 32,
@@ -203,7 +216,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   checkboxChecked: {
-    backgroundColor: "#8b4513", // brown-ish
+    backgroundColor: "#8b4513",
     borderColor: "#8b4513",
   },
   rememberText: {
@@ -213,7 +226,7 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   loginButton: {
-    backgroundColor: "#60a5fa", // blue-400
+    backgroundColor: "#60a5fa",
     paddingVertical: 14,
     borderRadius: 8,
     marginTop: 24,
@@ -233,7 +246,7 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   signUpText: {
-    color: "#2563eb", // blue-600
+    color: "#2563eb",
     fontWeight: "500",
   },
 });

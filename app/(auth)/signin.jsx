@@ -42,13 +42,11 @@ const SignupScreen = () => {
   };
 
   const handleSignup = async () => {
-    // Basic validation
     if (!email || !username || !password || !confirmPassword) {
       Alert.alert("Error", "Please fill in all required fields");
       return;
     }
 
-    // Password confirmation validation
     if (password !== confirmPassword) {
       Alert.alert("Error", "Password fields didn't match.");
       return;
@@ -61,21 +59,10 @@ const SignupScreen = () => {
         email,
         username,
         password,
-        confirm_password: confirmPassword,
         phone_number: phoneNumber || "",
       };
 
-      // Remove undefined values
-      Object.keys(userData).forEach((key) => {
-        if (userData[key] === undefined || userData[key] === "") {
-          if (key !== "phone_number") {
-            // Keep phone_number even if empty
-            delete userData[key];
-          }
-        }
-      });
-
-      const response = await fetch("http://127.0.0.1:8000/api/auth/register/", {
+      const response = await fetch("http://192.168.1.177:8000/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -86,20 +73,17 @@ const SignupScreen = () => {
       const data = await response.json();
 
       if (response.ok) {
-        Alert.alert(
-          "Success",
-          "Account created successfully! Please check your email for verification.",
-          [
-            {
-              text: "OK",
-              onPress: () => {
-                navigation.navigate("Login");
-              },
+        Alert.alert("Success", "Account created successfully!", [
+          {
+            text: "OK",
+            onPress: () => {
+              // Replace this with your actual navigation logic
+              // For example: navigation.navigate("Login");
+              console.log("Navigating to login...");
             },
-          ]
-        );
+          },
+        ]);
       } else {
-        // Handle validation errors from backend
         let errorMessage = "Registration failed";
         if (data.email) {
           errorMessage = `Email: ${data.email.join(", ")}`;
@@ -109,8 +93,8 @@ const SignupScreen = () => {
           errorMessage = `Password: ${data.password.join(", ")}`;
         } else if (data.phone_number) {
           errorMessage = `Phone: ${data.phone_number.join(", ")}`;
-        } else if (data.non_field_errors) {
-          errorMessage = data.non_field_errors.join(", ");
+        } else if (data.detail) {
+          errorMessage = data.detail;
         }
 
         Alert.alert("Registration Error", errorMessage);
