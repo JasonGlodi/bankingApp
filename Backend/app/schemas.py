@@ -16,6 +16,16 @@ class UserOut(BaseModel):
     id: int
     username: str
     email: EmailStr
+    balance: int 
 
     class Config:
         orm_mode = True
+
+class DepositRequest(BaseModel):
+    email: EmailStr
+    amount: int
+
+class TransferRequest(BaseModel):
+    sender_email: EmailStr
+    receiver_email: EmailStr
+    amount: int

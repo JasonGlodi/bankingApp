@@ -1,9 +1,10 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from app.schemas import UserOut
+from app.schemas import UserOut, TransferRequest, DepositRequest
 from typing import List
 from app import models, schemas, auth, utils
 from app.database import engine, Base, get_db
+from fastapi import Query
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
@@ -48,3 +49,63 @@ def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
         "email": db_user.email
     }
 
+
+
+@app.post("/deposit")
+def deposit_funds(data: DepositRequest, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == data.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if data.amount <= 0:
+        raise HTTPException(status_code=400, detail="Deposit amount must be positive")
+    
+    user.balance += data.amount
+    db.commit()
+    db.refresh(user)
+    return {
+        "status": "success",
+        "message": f"{data.amount} deposited to {user.username}'s account",
+        "balance": user.balance
+    }
+
+
+@app.post("/transfer")
+def transfer_funds(data: TransferRequest, db: Session = Depends(get_db)):
+    sender = db.query(models.User).filter(models.User.email == data.sender_email).first()
+    receiver = db.query(models.User).filter(models.User.email == data.receiver_email).first()
+
+    if not sender:
+        raise HTTPException(status_code=404, detail="Sender not found")
+    if not receiver:
+        raise HTTPException(status_code=404, detail="Receiver not found")
+    if data.amount <= 0:
+        raise HTTPException(status_code=400, detail="Transfer amount must be positive")
+    if sender.balance < data.amount:
+        raise HTTPException(status_code=400, detail="Insufficient balance")
+
+    sender.balance -= data.amount
+    receiver.balance += data.amount
+
+    db.commit()
+    db.refresh(sender)
+    db.refresh(receiver)
+
+    return {
+        "status": "success",
+        "message": f"{data.amount} transferred from {sender.username} to {receiver.username}",
+        "sender_balance": sender.balance,
+        "receiver_balance": receiver.balance
+    }
+    
+@app.get("/balance")
+def get_balance(email: str = Query(...), db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {
+        "status": "success",
+        "username": user.username,
+        "email": user.email,
+        "balance": user.balance
+    }
