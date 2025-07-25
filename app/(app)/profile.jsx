@@ -270,7 +270,7 @@ export default function Profile() {
 
           <TouchableOpacity
             style={styles.optionItem}
-            onPress={() => setShowHistory(true)}
+            onPress={() => router.push("/transactions")}
           >
             <View style={styles.iconContainer}>
               <Icon name="clock" size={20} color="#3b82f6" />
@@ -299,14 +299,20 @@ export default function Profile() {
             />
           </View>
 
-          <TouchableOpacity style={styles.optionItem}>
+          <TouchableOpacity
+            style={styles.optionItem}
+            onPress={() => router.push("/changepassword")}
+          >
             <View style={styles.iconContainer}>
               <Icon name="lock" size={20} color="#3b82f6" />
             </View>
             <Text style={styles.optionText}>Change Password</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.optionItem}>
+          <TouchableOpacity
+            style={styles.optionItem}
+            onPress={() => router.push("/ForgotPassword")}
+          >
             <View style={styles.iconContainer}>
               <Icon name="unlock" size={20} color="#3b82f6" />
             </View>
@@ -316,7 +322,10 @@ export default function Profile() {
 
         <Text style={styles.sectionTitle}>General</Text>
         <View style={styles.optionsContainer}>
-          <TouchableOpacity style={styles.optionItem}>
+          <TouchableOpacity
+            style={styles.optionItem}
+            onPress={() => router.push("/notifications")}
+          >
             <View style={styles.iconContainer}>
               <Icon name="bell" size={20} color="#3b82f6" />
             </View>
