@@ -1,5 +1,6 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -23,32 +24,31 @@ const SignupScreen = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [hidePassword, setHidePassword] = useState(true);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  const validatePassword = (password) => {
+  const validatePassword = (pwd) => {
     const errors = [];
-    if (password.length < 8) {
-      errors.push("Password must be at least 8 characters long");
-    }
-    if (!/[A-Z]/.test(password)) {
-      errors.push("Password must contain at least one uppercase letter");
-    }
-    if (!/[a-z]/.test(password)) {
-      errors.push("Password must contain at least one lowercase letter");
-    }
-    if (!/[0-9]/.test(password)) {
-      errors.push("Password must contain at least one number");
-    }
+    if (pwd.length < 8) errors.push("At least 8 characters");
+    if (!/[A-Z]/.test(pwd)) errors.push("One uppercase letter");
+    if (!/[a-z]/.test(pwd)) errors.push("One lowercase letter");
+    if (!/[0-9]/.test(pwd)) errors.push("One number");
     return errors;
   };
 
   const handleSignup = async () => {
     if (!email || !username || !password || !confirmPassword) {
-      Alert.alert("Error", "Please fill in all required fields");
+      Alert.alert("Error", "Please fill in all required fields.");
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert("Error", "Password fields didn't match.");
+      Alert.alert("Error", "Passwords do not match.");
+      return;
+    }
+
+    const passwordErrors = validatePassword(password);
+    if (passwordErrors.length > 0) {
+      Alert.alert("Weak Password", passwordErrors.join("\n"));
       return;
     }
 
@@ -62,46 +62,37 @@ const SignupScreen = () => {
         phone_number: phoneNumber || "",
       };
 
-      const response = await fetch("http://192.168.1.177:8000/register", {
+      const response = await fetch("http://192.168.1.175:8000/register", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
       });
 
       const data = await response.json();
 
-      if (response.ok) {
-        Alert.alert("Success", "Account created successfully!", [
-          {
-            text: "OK",
-            onPress: () => {
-              // Replace this with your actual navigation logic
-              // For example: navigation.navigate("Login");
-              console.log("Navigating to login...");
-            },
-          },
-        ]);
-      } else {
-        let errorMessage = "Registration failed";
-        if (data.email) {
-          errorMessage = `Email: ${data.email.join(", ")}`;
-        } else if (data.username) {
-          errorMessage = `Username: ${data.username.join(", ")}`;
-        } else if (data.password) {
-          errorMessage = `Password: ${data.password.join(", ")}`;
-        } else if (data.phone_number) {
-          errorMessage = `Phone: ${data.phone_number.join(", ")}`;
+      if (!response.ok) {
+        let errorMessage = "Registration failed.";
+        const firstKey = Object.keys(data)[0];
+        if (Array.isArray(data[firstKey])) {
+          errorMessage = `${firstKey}: ${data[firstKey].join(", ")}`;
         } else if (data.detail) {
           errorMessage = data.detail;
         }
-
-        Alert.alert("Registration Error", errorMessage);
+        throw new Error(errorMessage);
       }
-    } catch (error) {
-      console.error("Registration error:", error);
-      Alert.alert("Error", "Network error. Please try again later.");
+
+      // Store token or data if needed
+      await AsyncStorage.setItem("user", JSON.stringify(data));
+
+      Alert.alert("Success", "Account created!", [
+        {
+          text: "Continue",
+          onPress: () => router.replace("/home"),
+        },
+      ]);
+    } catch (err) {
+      console.error("Signup Error:", err);
+      Alert.alert("Error", err.message);
     } finally {
       setLoading(false);
     }

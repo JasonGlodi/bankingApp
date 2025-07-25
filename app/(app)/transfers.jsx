@@ -10,86 +10,204 @@ import {
   Platform,
   Modal,
   SafeAreaView,
+  ActivityIndicator,
+  Alert,
+  RefreshControl,
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
-import { Picker } from "@react-native-picker/picker";
-import { toWords } from "number-to-words";
 import Header from "../components/header";
 import Navbar from "../components/Navbar";
-
-// MOCK DATA (Replace with backend API call to fetch user's cards later)
-const mockCards = [
-  { id: 1, type: "VISA", number: "**** **** **** 1234", balance: 10000 },
-  { id: 2, type: "MasterCard", number: "**** **** **** 5678", balance: 3500 },
-];
-
-// Mock users from database to choose from
-const availableUsersMock = [
-  { id: 3, name: "Grace" },
-  { id: 4, name: "Mike" },
-  { id: 5, name: "Daniel" },
-];
-
-const transactionIcons = {
-  card: "card",
-  same: "business",
-  other: "swap-horizontal",
-};
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Transfers() {
-  const [selectedCard, setSelectedCard] = useState(mockCards[0]);
+  const [user, setUser] = useState(null);
+  const [balance, setBalance] = useState(0);
   const [selectedTransaction, setSelectedTransaction] = useState("card");
-  const [beneficiaryName, setBeneficiaryName] = useState("");
-  const [cardNumber, setCardNumber] = useState("");
+  const [receiverEmail, setReceiverEmail] = useState("");
   const [amount, setAmount] = useState("");
-  const [currency, setCurrency] = useState("USD");
-  const [convertedAmount, setConvertedAmount] = useState(null);
-  const [amountWords, setAmountWords] = useState("");
-  const [saveBeneficiary, setSaveBeneficiary] = useState(true);
-  const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
+  const [availableUsers, setAvailableUsers] = useState([]);
   const [userModalVisible, setUserModalVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState("USD");
+  const [currencyDropdownVisible, setCurrencyDropdownVisible] = useState(false);
+  const availableCurrencies = ["USD", "EUR", "GBP", "XAF"];
 
-  const [beneficiaries, setBeneficiaries] = useState([
-    { id: 1, name: "Emma" },
-    { id: 2, name: "Justin" },
-  ]);
-
-  const [availableUsers, setAvailableUsers] = useState(availableUsersMock);
-
-  const availableCurrencies = ["USD", "FCFA", "EUR"];
-
-  useEffect(() => {
-    handleCurrencyConversion(amount, currency);
-  }, [amount, currency]);
-
-  const handleCardChange = (cardId) => {
-    const card = mockCards.find((c) => c.id === parseInt(cardId));
-    setSelectedCard(card);
+  const transactionIcons = {
+    card: "card",
+    same: "business",
+    other: "swap-horizontal",
   };
 
-  const handleCurrencyConversion = async (value, curr) => {
-    if (!value || isNaN(value)) {
-      setAmountWords("");
-      setConvertedAmount(null);
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
+  const fetchUserData = async () => {
+    try {
+      setRefreshing(true);
+      const token = await AsyncStorage.getItem("authToken");
+      const userEmail = await AsyncStorage.getItem("userEmail");
+
+      console.log("Token from storage:", token); // Debug log
+      console.log("User email from storage:", userEmail); // Debug log
+
+      if (!token || !userEmail) {
+        throw new Error("Authentication required");
+      }
+
+      // Get current user data
+      const userResponse = await axios.get(
+        "http://192.168.1.175:8000/balance",
+        {
+          params: { email: userEmail },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      setUser(userResponse.data);
+      setBalance(userResponse.data.balance);
+
+      // Get all users for beneficiary selection
+      const usersResponse = await axios.get("http://192.168.1.175:8000/users", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      setAvailableUsers(usersResponse.data);
+    } catch (error) {
+      console.error("Failed to fetch data:", error);
+      console.error("Error details:", error.response?.data); // Debug log
+      Alert.alert("Error", "Failed to load user data. Please login again.");
+      if (error.response?.status === 401) {
+        await AsyncStorage.removeItem("authToken");
+        await AsyncStorage.removeItem("userEmail");
+        // You might want to redirect to login screen here
+      }
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const handleTransfer = async () => {
+    if (!amount || !receiverEmail) {
+      Alert.alert("Error", "Please fill all required fields");
+      return;
+    }
+
+    if (parseFloat(amount) <= 0) {
+      Alert.alert("Error", "Amount must be positive");
       return;
     }
 
     try {
-      const res = await fetch(
-        `https://v6.exchangerate-api.com/v6/5e513b94141cb8ff254da33c/latest/USD`
-      );
-      const data = await res.json();
-      const rate = data.conversion_rates[curr] || 1;
-      const converted = (parseFloat(value) * rate).toFixed(2);
+      setProcessing(true);
+      const token = await AsyncStorage.getItem("authToken");
+      const userEmail = await AsyncStorage.getItem("userEmail");
 
-      setConvertedAmount(converted);
-      setAmountWords(`${toWords(parseInt(converted))} ${curr}`);
+      if (!token || !userEmail) {
+        throw new Error("Authentication required");
+      }
+
+      const transferData = {
+        sender_email: userEmail,
+        receiver_email: receiverEmail,
+        amount: parseFloat(amount),
+        currency: selectedCurrency,
+      };
+
+      const response = await axios.post(
+        "http://192.168.1.175:8000/transfer",
+        transferData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      Alert.alert("Success", response.data.message);
+      fetchUserData();
+      setAmount("");
+      setReceiverEmail("");
     } catch (error) {
-      console.log("Currency conversion error:", error);
-      setConvertedAmount(value);
-      setAmountWords(`${toWords(parseInt(value))} ${curr}`);
+      console.error("Transfer failed:", error);
+      console.error("Error details:", error.response?.data); // Debug log
+      Alert.alert(
+        "Error",
+        error.response?.data?.detail || "Transfer failed. Please try again."
+      );
+    } finally {
+      setProcessing(false);
     }
   };
+
+  const handleDeposit = async () => {
+    if (!amount || parseFloat(amount) <= 0) {
+      Alert.alert("Error", "Please enter a valid amount");
+      return;
+    }
+
+    try {
+      setProcessing(true);
+      const token = await AsyncStorage.getItem("authToken");
+      const userEmail = await AsyncStorage.getItem("userEmail");
+
+      if (!token || !userEmail) {
+        throw new Error("Authentication required");
+      }
+
+      const depositData = {
+        email: userEmail,
+        amount: parseFloat(amount),
+        currency: selectedCurrency,
+      };
+
+      const response = await axios.post(
+        "http://192.168.1.175:8000/deposit",
+        depositData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      Alert.alert("Success", response.data.message);
+      fetchUserData();
+      setAmount("");
+    } catch (error) {
+      console.error("Deposit failed:", error);
+      console.error("Error details:", error.response?.data); // Debug log
+      Alert.alert(
+        "Error",
+        error.response?.data?.detail || "Deposit failed. Please try again."
+      );
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Header title="Transfer" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#4e2ddb" />
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -101,36 +219,28 @@ export default function Transfers() {
         <ScrollView
           contentContainerStyle={styles.contentContainer}
           keyboardShouldPersistTaps="handled"
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={fetchUserData}
+              colors={["#4e2ddb"]}
+            />
+          }
         >
-          <View style={styles.cardDropdown}>
-            <Text style={styles.sectionTitle}>Choose Card</Text>
-            <View style={styles.pickerWrapper}>
-              <Picker
-                selectedValue={selectedCard.id.toString()}
-                onValueChange={(itemValue) => handleCardChange(itemValue)}
-                style={styles.picker}
-              >
-                {mockCards.map((card) => (
-                  <Picker.Item
-                    key={card.id}
-                    label={`${card.type} ${card.number}`}
-                    value={card.id.toString()}
-                  />
-                ))}
-              </Picker>
+          {user && (
+            <View style={styles.balanceContainer}>
+              <Text style={styles.balanceLabel}>Your Balance:</Text>
+              <Text style={styles.balanceAmount}>
+                {balance.toLocaleString()} {user.currency || "USD"}
+              </Text>
             </View>
-          </View>
-          <Text style={styles.balanceText}>
-            Available balance : {selectedCard.balance.toLocaleString()}{" "}
-            {currency}
-          </Text>
+          )}
 
-          <Text style={styles.sectionTitle}>Choose Transaction</Text>
+          <Text style={styles.sectionTitle}>Transaction Type</Text>
           <View style={styles.transactionTypeContainer}>
             {[
-              { key: "card", label: "Via card number" },
-              { key: "same", label: "Same bank" },
-              { key: "other", label: "Other bank" },
+              { key: "card", label: "Transfer" },
+              { key: "same", label: "Deposit" },
             ].map((option) => (
               <TouchableOpacity
                 key={option.key}
@@ -160,132 +270,133 @@ export default function Transfers() {
             ))}
           </View>
 
-          <View style={styles.beneficiaryHeader}>
-            <Text style={styles.sectionTitle}>Choose Beneficiary</Text>
-            <TouchableOpacity onPress={() => setUserModalVisible(true)}>
-              <Icon name="add-circle-outline" size={30} color="#4e2ddb" />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.beneficiaryRow}>
-            {beneficiaries.map((beneficiary) => (
-              <View key={beneficiary.id} style={styles.beneficiaryBox}>
-                <View style={styles.avatarIcon}>
-                  <Icon name="person" size={36} color="#888" />
-                </View>
-                <Text style={styles.beneficiaryName}>{beneficiary.name}</Text>
-              </View>
-            ))}
-          </View>
+          {/* Currency Dropdown */}
+          <Text style={styles.sectionTitle}>Currency</Text>
+          <TouchableOpacity
+            style={styles.dropdownButton}
+            onPress={() => setCurrencyDropdownVisible(!currencyDropdownVisible)}
+          >
+            <Text style={styles.dropdownButtonText}>{selectedCurrency}</Text>
+            <Icon
+              name={currencyDropdownVisible ? "chevron-up" : "chevron-down"}
+              size={20}
+              color="#4e2ddb"
+            />
+          </TouchableOpacity>
 
-          <View style={styles.form}>
-            <TextInput
-              style={styles.input}
-              placeholder="Beneficiary Name"
-              value={beneficiaryName}
-              onChangeText={setBeneficiaryName}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Card Number"
-              keyboardType="numeric"
-              value={cardNumber}
-              onChangeText={setCardNumber}
-            />
-            <View style={styles.currencyInputWrapper}>
-              <TextInput
-                style={[styles.input, { flex: 1 }]}
-                placeholder="Amount"
-                keyboardType="numeric"
-                value={amount}
-                onChangeText={(val) => {
-                  setAmount(val);
-                  handleCurrencyConversion(val, currency);
-                }}
-              />
-              <TouchableOpacity
-                onPress={() => setCurrencyModalVisible(true)}
-                style={styles.currencyCard}
-              >
-                <Text style={styles.currencyCardText}>{currency}</Text>
-                <Icon name="chevron-down" size={20} color="#fff" />
-              </TouchableOpacity>
+          {currencyDropdownVisible && (
+            <View style={styles.dropdownContainer}>
+              {availableCurrencies.map((currency) => (
+                <TouchableOpacity
+                  key={currency}
+                  style={styles.dropdownItem}
+                  onPress={() => {
+                    setSelectedCurrency(currency);
+                    setCurrencyDropdownVisible(false);
+                  }}
+                >
+                  <Text style={styles.dropdownItemText}>{currency}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
-            <Text style={styles.amountWords}>{amountWords}</Text>
+          )}
 
-            <TouchableOpacity
-              style={styles.checkboxContainer}
-              onPress={() => setSaveBeneficiary(!saveBeneficiary)}
-              activeOpacity={0.8}
-            >
-              <View
-                style={[
-                  styles.checkbox,
-                  saveBeneficiary && styles.checkboxChecked,
-                ]}
-              >
-                {saveBeneficiary && (
-                  <Icon name="checkmark" size={16} color="#fff" />
-                )}
+          {selectedTransaction === "card" ? (
+            <>
+              <Text style={styles.sectionTitle}>Recipient</Text>
+              <View style={styles.beneficiaryHeader}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Recipient Email"
+                  value={receiverEmail}
+                  onChangeText={setReceiverEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+                <TouchableOpacity
+                  onPress={() => setUserModalVisible(true)}
+                  style={styles.addButton}
+                >
+                  <Icon name="people" size={24} color="#4e2ddb" />
+                </TouchableOpacity>
               </View>
-              <Text style={styles.checkboxLabel}>
-                Save to directory of beneficiary
-              </Text>
-            </TouchableOpacity>
-          </View>
 
-          <TouchableOpacity style={styles.confirmButton}>
-            <Text style={styles.confirmText}>Confirm</Text>
+              <Text style={styles.sectionTitle}>Amount</Text>
+              <View style={styles.amountInputContainer}>
+                <TextInput
+                  style={[styles.input, styles.amountInput]}
+                  placeholder="Amount"
+                  keyboardType="numeric"
+                  value={amount}
+                  onChangeText={setAmount}
+                />
+                <Text style={styles.currencyText}>{selectedCurrency}</Text>
+              </View>
+            </>
+          ) : (
+            <>
+              <Text style={styles.sectionTitle}>Deposit Amount</Text>
+              <View style={styles.amountInputContainer}>
+                <TextInput
+                  style={[styles.input, styles.amountInput]}
+                  placeholder="Amount"
+                  keyboardType="numeric"
+                  value={amount}
+                  onChangeText={setAmount}
+                />
+                <Text style={styles.currencyText}>{selectedCurrency}</Text>
+              </View>
+            </>
+          )}
+
+          <TouchableOpacity
+            style={[styles.actionButton, processing && styles.disabledButton]}
+            onPress={
+              selectedTransaction === "card" ? handleTransfer : handleDeposit
+            }
+            disabled={processing}
+          >
+            {processing ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.actionButtonText}>
+                {selectedTransaction === "card" ? "Transfer" : "Deposit"}
+              </Text>
+            )}
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Modal: Currency Selection */}
-      <Modal visible={currencyModalVisible} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select Currency</Text>
-            {availableCurrencies.map((curr) => (
-              <TouchableOpacity
-                key={curr}
-                style={styles.modalCurrencyCard}
-                onPress={() => {
-                  setCurrency(curr);
-                  handleCurrencyConversion(amount, curr);
-                  setCurrencyModalVisible(false);
-                }}
-              >
-                <Text style={styles.modalCurrencyText}>{curr}</Text>
-              </TouchableOpacity>
-            ))}
-            <TouchableOpacity
-              onPress={() => setCurrencyModalVisible(false)}
-              style={styles.modalCloseButton}
-            >
-              <Text style={styles.modalCloseText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Modal: Add Beneficiary from DB */}
+      {/* Beneficiary Selection Modal */}
       <Modal visible={userModalVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Add Beneficiary</Text>
-            {availableUsers.map((user) => (
-              <TouchableOpacity
-                key={user.id}
-                style={styles.modalCurrencyCard}
-                onPress={() => {
-                  if (!beneficiaries.find((b) => b.id === user.id)) {
-                    setBeneficiaries([...beneficiaries, user]);
-                  }
-                  setUserModalVisible(false);
-                }}
-              >
-                <Text style={styles.modalCurrencyText}>{user.name}</Text>
-              </TouchableOpacity>
-            ))}
+            <Text style={styles.modalTitle}>Select Recipient</Text>
+            <ScrollView>
+              {availableUsers
+                .filter((u) => u.email !== user?.email)
+                .map((user) => (
+                  <TouchableOpacity
+                    key={user.email}
+                    style={styles.modalItem}
+                    onPress={() => {
+                      setReceiverEmail(user.email);
+                      setUserModalVisible(false);
+                    }}
+                  >
+                    <View style={styles.userInfo}>
+                      <Icon name="person-circle" size={24} color="#4e2ddb" />
+                      <View style={styles.userDetails}>
+                        <Text style={styles.userName}>{user.username}</Text>
+                        <Text style={styles.userEmail}>{user.email}</Text>
+                        <Text style={styles.userCurrency}>
+                          {user.currency || "USD"}
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+            </ScrollView>
             <TouchableOpacity
               onPress={() => setUserModalVisible(false)}
               style={styles.modalCloseButton}
@@ -302,46 +413,53 @@ export default function Transfers() {
 }
 
 const styles = StyleSheet.create({
-  // same styles as before...
-  container: { flex: 1, backgroundColor: "#f5f5f5" },
+  container: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+  },
   contentContainer: {
     paddingHorizontal: 20,
     paddingBottom: 80,
     paddingTop: 10,
   },
-  cardDropdown: {
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 10,
+    color: "#4e2ddb",
+    fontSize: 16,
+  },
+  balanceContainer: {
     backgroundColor: "#fff",
-    borderRadius: 6,
-    marginVertical: 10,
-    padding: 12,
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+    alignItems: "center",
   },
-  pickerWrapper: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    overflow: "hidden",
-  },
-  picker: {
-    height: 50,
-    width: "100%",
-    paddingHorizontal: 10,
-    color: "#333",
-  },
-  balanceText: {
-    fontSize: 12,
+  balanceLabel: {
+    fontSize: 16,
     color: "#666",
-    marginBottom: 10,
+  },
+  balanceAmount: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#4e2ddb",
+    marginTop: 8,
   },
   sectionTitle: {
-    fontWeight: "bold",
-    marginVertical: 8,
     fontSize: 16,
+    fontWeight: "bold",
     color: "#333",
+    marginBottom: 8,
+    marginTop: 16,
   },
   transactionTypeContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 15,
+    marginBottom: 16,
   },
   transactionButton: {
     flex: 1,
@@ -358,153 +476,142 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     fontSize: 16,
-    textAlign: "center",
   },
   transactionTextInactive: {
     color: "#333",
     fontSize: 16,
-    textAlign: "center",
   },
   beneficiaryHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-  },
-  beneficiaryRow: {
-    flexDirection: "row",
-    marginVertical: 10,
-    flexWrap: "wrap",
-  },
-  beneficiaryBox: {
-    backgroundColor: "#fff",
-    margin: 5,
-    borderRadius: 6,
-    padding: 10,
-    alignItems: "center",
-    width: 100,
-  },
-  avatarIcon: {
-    backgroundColor: "#ddd",
-    borderRadius: 30,
-    width: 60,
-    height: 60,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 6,
-  },
-  beneficiaryName: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#444",
-  },
-  form: {
-    marginTop: 10,
+    marginBottom: 8,
   },
   input: {
     backgroundColor: "#fff",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 10,
-    borderRadius: 6,
-    fontSize: 14,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: "#ddd",
   },
-  currencyInputWrapper: {
+  amountInputContainer: {
     flexDirection: "row",
     alignItems: "center",
   },
-  currencyCard: {
-    backgroundColor: "#4e2ddb",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginLeft: 8,
-    borderRadius: 6,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  currencyCardText: {
-    color: "#fff",
-    fontWeight: "bold",
-    marginRight: 4,
-  },
-  amountWords: {
-    fontStyle: "italic",
-    fontSize: 12,
-    marginBottom: 12,
-    color: "#666",
-  },
-  checkboxContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    justifyContent: "center",
-    alignItems: "center",
+  amountInput: {
+    flex: 1,
     marginRight: 8,
   },
-  checkboxChecked: {
-    backgroundColor: "#4e2ddb",
-    borderColor: "#4e2ddb",
-  },
-  checkboxLabel: {
-    fontSize: 14,
-    color: "#444",
-  },
-  confirmButton: {
-    backgroundColor: "#4e2ddb",
-    paddingVertical: 16,
-    borderRadius: 8,
-    marginBottom: 20,
-    marginHorizontal: 10,
-  },
-  confirmText: {
-    color: "#fff",
-    fontWeight: "bold",
-    textAlign: "center",
+  currencyText: {
     fontSize: 16,
+    fontWeight: "bold",
+    color: "#4e2ddb",
+  },
+  addButton: {
+    marginLeft: 8,
+    padding: 10,
+  },
+  dropdownButton: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  dropdownButtonText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  dropdownContainer: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    marginTop: -10,
+    marginBottom: 16,
+  },
+  dropdownItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  dropdownItemText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  actionButton: {
+    backgroundColor: "#4e2ddb",
+    borderRadius: 8,
+    padding: 16,
+    marginTop: 24,
+    alignItems: "center",
+  },
+  disabledButton: {
+    backgroundColor: "#a39fc8",
+  },
+  actionButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
+    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",
   },
   modalContent: {
     backgroundColor: "#fff",
-    padding: 20,
-    width: 280,
     borderRadius: 8,
+    width: "90%",
+    maxHeight: "80%",
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  modalCurrencyCard: {
-    paddingVertical: 12,
+    padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
+    textAlign: "center",
+  },
+  modalItem: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  userInfo: {
+    flexDirection: "row",
     alignItems: "center",
   },
-  modalCurrencyText: {
+  userDetails: {
+    marginLeft: 12,
+  },
+  userName: {
     fontSize: 16,
+    fontWeight: "bold",
+  },
+  userEmail: {
+    fontSize: 14,
+    color: "#666",
+  },
+  userCurrency: {
+    fontSize: 14,
     color: "#4e2ddb",
+    fontWeight: "bold",
   },
   modalCloseButton: {
-    marginTop: 10,
-    paddingVertical: 12,
+    padding: 16,
     alignItems: "center",
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
   },
   modalCloseText: {
     fontSize: 16,
-    color: "#888",
+    color: "#4e2ddb",
+    fontWeight: "bold",
   },
 });

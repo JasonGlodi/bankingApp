@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { Link, useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -19,45 +20,58 @@ const LoginScreen = () => {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [hidePassword, setHidePassword] = useState(true);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert("Error", "Please enter both email and password.");
+      Alert.alert("Validation Error", "Please enter both email and password.");
       return;
     }
 
+    setLoading(true);
+
     try {
-      const response = await fetch("http://192.168.1.177:8000/login", {
+      const response = await fetch("http://192.168.1.175:8000/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
+      const text = await response.text();
+      let data;
 
-      if (response.ok) {
-        Alert.alert("Welcome", `Logged in as ${data.username}`);
-        console.log("Access Token:", data.access_token);
-
-        // ✅ Redirect to home page
-        router.push("/home");
-      } else {
-        let errorMessage = "Login failed";
-        if (data.detail) {
-          errorMessage = data.detail;
-        }
-        Alert.alert("Login Error", errorMessage);
+      try {
+        data = JSON.parse(text);
+      } catch (err) {
+        throw new Error("Invalid server response");
       }
-    } catch (error) {
-      console.error("Login error:", error);
-      Alert.alert("Network Error", "Please check your connection.");
+
+      if (!response.ok) {
+        throw new Error(data?.detail || "Login failed. Try again.");
+      }
+
+      if (rememberMe) {
+        await AsyncStorage.setItem("access_token", data.access_token);
+        await AsyncStorage.setItem("user", JSON.stringify(data));
+      }
+
+      Alert.alert("Welcome", `Logged in as ${data.username}`);
+      router.replace("/home");
+    } catch (err) {
+      console.error("Login Error:", err);
+      Alert.alert("Error", err.message);
+    } finally {
+      setLoading(false);
     }
+    await AsyncStorage.setItem(
+      "user",
+      JSON.stringify({
+        username: data.username,
+        email: data.email,
+        balance: data.balance,
+      })
+    );
   };
 
   return (

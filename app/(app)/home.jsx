@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,36 +7,91 @@ import {
   StatusBar,
   TouchableOpacity,
   ScrollView,
+  ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { Link, router } from "expo-router";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import FontAwesome from "react-native-vector-icons/FontAwesome";
-import Ionicons from "react-native-vector-icons/Ionicons";
 import Navbar from "../components/Navbar";
 import Header from "../components/header";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const Home = () => {
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchUserData = async () => {
+    try {
+      const storedUser = await AsyncStorage.getItem("user");
+
+      if (storedUser) {
+        const parsed = JSON.parse(storedUser);
+        setUserData({
+          username: parsed.username || "Guest User",
+          email: parsed.email || "guest@example.com",
+          balance: parsed.balance || 0,
+          accountNumber: "**** **** **** 9018",
+          cardType: "Virtual Debit Card",
+          currency: "XAF",
+        });
+      } else {
+        // fallback user
+        setUserData({
+          username: "Guest User",
+          email: "guest@example.com",
+          balance: 0,
+          accountNumber: "**** **** **** 0000",
+          cardType: "Virtual Debit Card",
+          currency: "XAF",
+        });
+      }
+    } catch (error) {
+      console.error("Error loading user data:", error);
+      setUserData({
+        username: "Guest User",
+        email: "guest@example.com",
+        balance: 0,
+        accountNumber: "**** **** **** 0000",
+        cardType: "Virtual Debit Card",
+        currency: "XAF",
+      });
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchUserData();
+  };
+
   const handleMenuPress = (itemId) => {
     switch (itemId) {
-      case 1: // Account and Card
+      case 1:
         router.push("/menu/accountandcard");
         break;
-      case 2: // Transfer
+      case 2:
         router.push("/transfers");
         break;
-      case 3: // Withdraw
+      case 3:
         router.push("/menu/withdraw");
         break;
-      case 4: // Mobile prepaid
+      case 4:
         router.push("/menu/mobile");
         break;
-      case 5: // Pay the bill
+      case 5:
         router.push("/menu/bill");
         break;
-      case 6: // Transaction report
+      case 6:
         router.push("/transactions");
         break;
-      case 7: // Beneficiary
+      case 7:
         router.push("/menu/beneficiary");
         break;
       default:
@@ -50,102 +105,93 @@ const Home = () => {
       title: "Account\nand Card",
       icon: "account-balance-wallet",
       color: "#6366F1",
-      route: "/menu/accountandcard",
     },
-    {
-      id: 2,
-      title: "Transfer",
-      icon: "swap-horiz",
-      color: "#EF4444",
-      route: "/transfers",
-    },
-    {
-      id: 3,
-      title: "Withdraw",
-      icon: "atm",
-      color: "#3B82F6",
-      route: "/menu/withdraw",
-    },
+    { id: 2, title: "Transfer", icon: "swap-horiz", color: "#EF4444" },
+    { id: 3, title: "Withdraw", icon: "atm", color: "#3B82F6" },
     {
       id: 4,
       title: "Mobile\nprepaid",
       icon: "phone-android",
       color: "#F59E0B",
-      route: "/menu/mobile",
     },
-    {
-      id: 5,
-      title: "Pay the\nbill",
-      icon: "receipt",
-      color: "#10B981",
-      route: "/menu/bill",
-    },
+    { id: 5, title: "Pay the\nbill", icon: "receipt", color: "#10B981" },
     {
       id: 6,
       title: "Transaction\nreport",
       icon: "description",
       color: "#6366F1",
-      route: "/settings/transactions",
     },
-    {
-      id: 7,
-      title: "Beneficiary",
-      icon: "people",
-      color: "#EC4899",
-      route: "/menu/beneficiary",
-    },
+    { id: 7, title: "Beneficiary", icon: "people", color: "#EC4899" },
   ];
+
+  const formatBalance = (balance) => {
+    return balance?.toLocaleString("en-US") || "0";
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#6366F1" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F3F4F6" />
-      <Header title="Home" />
+      <Header title="Home" showBackButton={false} />
+
       <ScrollView
         style={styles.content}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.contentContainer}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#6366F1"]}
+            tintColor="#6366F1"
+          />
+        }
       >
-        {/* Credit Card */}
+        {/* Credit Card Section */}
         <View style={styles.cardContainer}>
           <View style={styles.creditCard}>
             <View style={styles.cardHeader}>
-              <Text style={styles.cardHolderName}>John Smith</Text>
-              <Text style={styles.cardType}>Amazon Platinum</Text>
+              <Text style={styles.cardHolderName}>{userData?.username}</Text>
+              <Text style={styles.cardType}>{userData?.cardType}</Text>
             </View>
 
             <View style={styles.cardNumber}>
-              <Text style={styles.cardNumberText}>4756</Text>
-              <View style={styles.dots}>
-                <View style={styles.dot} />
-                <View style={styles.dot} />
-                <View style={styles.dot} />
-                <View style={styles.dot} />
-              </View>
-              <View style={styles.dots}>
-                <View style={styles.dot} />
-                <View style={styles.dot} />
-                <View style={styles.dot} />
-                <View style={styles.dot} />
-              </View>
-              <Text style={styles.cardNumberText}>9018</Text>
+              <Text style={styles.cardNumberText}>
+                {userData?.accountNumber}
+              </Text>
             </View>
 
             <View style={styles.cardFooter}>
-              <Text style={styles.balance}>$3,469.52</Text>
+              <Text style={styles.balance}>
+                {userData?.currency}
+                {formatBalance(userData?.balance)}
+              </Text>
               <Text style={styles.visaText}>VISA</Text>
             </View>
 
-            {/* Card Design Elements */}
             <View style={styles.cardCircle1} />
             <View style={styles.cardCircle2} />
           </View>
         </View>
 
-        {/* Menu Grid - Using Link components */}
-        <View style={styles.menuGrid}>
-          {menuItems.slice(0, 3).map((item) => (
-            <Link key={item.id} href={item.route} asChild>
-              <TouchableOpacity style={styles.menuItem}>
+        {/* Menu Grids */}
+        {[0, 3, 6].map((start) => (
+          <View style={styles.menuGrid} key={start}>
+            {menuItems.slice(start, start + 3).map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={styles.menuItem}
+                onPress={() => handleMenuPress(item.id)}
+              >
                 <View
                   style={[
                     styles.iconContainer,
@@ -156,48 +202,31 @@ const Home = () => {
                 </View>
                 <Text style={styles.menuText}>{item.title}</Text>
               </TouchableOpacity>
-            </Link>
-          ))}
-        </View>
+            ))}
+          </View>
+        ))}
 
-        <View style={styles.menuGrid}>
-          {menuItems.slice(3, 6).map((item) => (
-            <Link key={item.id} href={item.route} asChild>
-              <TouchableOpacity style={styles.menuItem}>
-                <View
-                  style={[
-                    styles.iconContainer,
-                    { backgroundColor: `${item.color}15` },
-                  ]}
-                >
-                  <Icon name={item.icon} size={28} color={item.color} />
-                </View>
-                <Text style={styles.menuText}>{item.title}</Text>
-              </TouchableOpacity>
-            </Link>
-          ))}
-        </View>
-
-        <View style={styles.menuGrid}>
-          {menuItems.slice(6).map((item) => (
-            <Link key={item.id} href={item.route} asChild>
-              <TouchableOpacity style={styles.menuItem}>
-                <View
-                  style={[
-                    styles.iconContainer,
-                    { backgroundColor: `${item.color}15` },
-                  ]}
-                >
-                  <Icon name={item.icon} size={28} color={item.color} />
-                </View>
-                <Text style={styles.menuText}>{item.title}</Text>
-              </TouchableOpacity>
-            </Link>
-          ))}
+        {/* Recent Transactions (Static for now) */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Recent Transactions</Text>
+            <TouchableOpacity onPress={() => router.push("/transactions")}>
+              <Text style={styles.seeAll}>See All</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.transactionItem}>
+            <View style={styles.transactionIcon}>
+              <Icon name="shopping-bag" size={20} color="#6366F1" />
+            </View>
+            <View style={styles.transactionDetails}>
+              <Text style={styles.transactionName}>Amazon Purchase</Text>
+              <Text style={styles.transactionDate}>Today, 10:45 AM</Text>
+            </View>
+            <Text style={styles.transactionAmount}>- XAF 24,500</Text>
+          </View>
         </View>
       </ScrollView>
 
-      {/* Bottom Navigation */}
       <Navbar />
     </SafeAreaView>
   );
@@ -207,6 +236,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F3F4F6",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   content: {
     flex: 1,
@@ -249,17 +283,6 @@ const styles = StyleSheet.create({
     color: "#FFF",
     fontSize: 16,
     fontWeight: "500",
-  },
-  dots: {
-    flexDirection: "row",
-    marginHorizontal: 8,
-  },
-  dot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "rgba(255, 255, 255, 0.7)",
-    marginHorizontal: 1,
   },
   cardFooter: {
     flexDirection: "row",
@@ -319,6 +342,59 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 18,
     fontWeight: "500",
+  },
+  section: {
+    marginTop: 20,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#1F2937",
+  },
+  seeAll: {
+    fontSize: 14,
+    color: "#6366F1",
+    fontWeight: "500",
+  },
+  transactionItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
+  },
+  transactionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#E0E7FF",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  transactionDetails: {
+    flex: 1,
+  },
+  transactionName: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#1F2937",
+    marginBottom: 4,
+  },
+  transactionDate: {
+    fontSize: 12,
+    color: "#6B7280",
+  },
+  transactionAmount: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#EF4444",
   },
 });
 
